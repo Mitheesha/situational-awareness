@@ -5,6 +5,7 @@ Runs complete analytics pipeline and stores results
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
+import json
 
 from datetime import datetime
 from analytics.detectors.pattern_detector import PatternDetector
@@ -150,6 +151,120 @@ class AnalyticsEngine:
         """Cleanup"""
         self.detector.close()
         self.db.disconnect()
+
+    def run_enhanced_analysis(self):
+        """Run complete analytics with enhanced features"""
+        print("\n" + "="*70)
+        print("🧠 ENHANCED ANALYTICS ENGINE - LAYER 3")
+        print("="*70)
+        
+        # Step 1: Pattern Detection
+        print("\n📍 STEP 1: PATTERN DETECTION")
+        pattern_results = self.detector.run_all_detectors()
+        
+        all_signals = []
+        for signals in pattern_results.values():
+            all_signals.extend(signals)
+        
+        # Step 2: Signal Scoring
+        print("\n📍 STEP 2: SIGNAL SCORING")
+        ranked_signals = self.scorer.rank_signals(all_signals)
+        priority_signals = self.scorer.get_priority_signals(all_signals, top_n=15)
+        
+        # Step 3: Composite Indices
+        print("\n📍 STEP 3: COMPOSITE INDICES")
+        from analytics.indices.composite_indices import CompositeIndexCalculator
+        index_calc = CompositeIndexCalculator()
+        indices = index_calc.calculate_all_indices(all_signals)
+        overall_risk = index_calc.get_overall_business_risk_score(all_signals)
+        
+        print(f"✅ Calculated 4 composite indices")
+        print(f"   Overall Business Risk: {overall_risk['overall_score']:.1f}/100 ({overall_risk['level']})")
+        
+        # Step 4: Velocity Tracking
+        print("\n📍 STEP 4: VELOCITY TRACKING")
+        from analytics.detectors.velocity_tracker import VelocityTracker
+        vel_tracker = VelocityTracker()
+        velocities = vel_tracker.calculate_topic_velocity()
+        vel_tracker.close()
+        
+        accelerating = [v for v in velocities.values() if v['trend'] == 'ACCELERATING']
+        print(f"✅ Tracked velocity for {len(velocities)} topics")
+        print(f"   {len(accelerating)} topics accelerating")
+        
+        # Step 5: Early Warning System
+        print("\n📍 STEP 5: EARLY WARNING SYSTEM")
+        from analytics.alerts.early_warning import EarlyWarningSystem
+        ews = EarlyWarningSystem()
+        warnings = ews.generate_warnings(priority_signals, velocities)
+        
+        critical_warnings = [w for w in warnings if w['priority'] == 'CRITICAL']
+        print(f"✅ Generated {len(warnings)} early warnings")
+        print(f"   {len(critical_warnings)} critical alerts")
+        
+        # Step 6: Generate Insights
+        print("\n📍 STEP 6: INSIGHT GENERATION")
+        insights = self.generator.generate_insights(priority_signals)
+        
+        # Step 7: Store Everything
+        print("\n📍 STEP 7: STORING RESULTS")
+        self._store_signals(all_signals)
+        self._store_insights(insights)
+        
+        # Display summary
+        self._display_enhanced_summary(
+            overall_risk, indices, warnings, insights
+        )
+        
+        return {
+            'signals': all_signals,
+            'indices': indices,
+            'overall_risk': overall_risk,
+            'velocities': velocities,
+            'warnings': warnings,
+            'insights': insights
+        }
+    
+    def _display_enhanced_summary(self, overall_risk, indices, warnings, insights):
+        """Display enhanced analytics summary"""
+        print("\n" + "="*70)
+        print("📊 ANALYTICS SUMMARY")
+        print("="*70)
+        
+        # Overall Risk
+        score = overall_risk['overall_score']
+        level = overall_risk['level']
+        icon = "🔴" if level == 'CRITICAL' else "🟠" if level == 'HIGH' else "🟡" if level == 'MEDIUM' else "🟢"
+        
+        print(f"\n{icon} OVERALL BUSINESS RISK: {score:.1f}/100 ({level})")
+        print(f"   {overall_risk['action']}")
+        
+        # Index Breakdown
+        print("\n📊 COMPOSITE INDICES:")
+        for name, data in indices.items():
+            level_icon = "🔴" if data['level'] == 'CRITICAL' else "🟠" if data['level'] == 'HIGH' else "🟡" if data['level'] == 'MEDIUM' else "🟢"
+            print(f"   {level_icon} {name.replace('_', ' ').title()}: {data['score']:.1f}/100")
+        
+        # Warnings
+        critical = [w for w in warnings if w['priority'] == 'CRITICAL']
+        high = [w for w in warnings if w['priority'] == 'HIGH']
+        
+        print(f"\n🚨 EARLY WARNINGS:")
+        print(f"   Critical: {len(critical)}")
+        print(f"   High: {len(high)}")
+        print(f"   Total: {len(warnings)}")
+        
+        if critical:
+            print(f"\n   Top Critical Alert:")
+            print(f"   • {critical[0]['title']}")
+        
+        # Insights
+        print(f"\n💡 BUSINESS INSIGHTS: {len(insights)} generated")
+        critical_insights = [i for i in insights if i.severity == 'critical']
+        if critical_insights:
+            print(f"   Critical insights: {len(critical_insights)}")
+        
+        print("\n" + "="*70)
 
 if __name__ == "__main__":
     import json
