@@ -15,7 +15,7 @@ if not db.connect():
 with db.get_cursor(dict_cursor=True) as cursor:
     
     # 1. Most urgent topics
-    print("\n🚨 MOST URGENT TOPICS:")
+    print("\n MOST URGENT TOPICS:")
     print("="*60)
     cursor.execute("""
         SELECT topic, urgency, COUNT(*) as count
@@ -29,7 +29,7 @@ with db.get_cursor(dict_cursor=True) as cursor:
         print(f"  • {row['topic']:30} {row['count']:3} mentions")
     
     # 2. Recent news headlines
-    print("\n📰 RECENT NEWS HEADLINES:")
+    print("\n RECENT NEWS HEADLINES:")
     print("="*60)
     cursor.execute("""
         SELECT source, title, published
@@ -42,7 +42,7 @@ with db.get_cursor(dict_cursor=True) as cursor:
         print(f"  [{row['source']}] {row['title'][:60]}...")
     
     # 3. Sentiment breakdown
-    print("\n😊 SENTIMENT BREAKDOWN:")
+    print("\n SENTIMENT BREAKDOWN:")
     print("="*60)
     cursor.execute("""
         SELECT sentiment, COUNT(*) as count
@@ -54,7 +54,7 @@ with db.get_cursor(dict_cursor=True) as cursor:
         print(f"  {row['sentiment']:20} {row['count']:4}")
     
     # 4. Locations mentioned
-    print("\n📍 TOP LOCATIONS:")
+    print("\n TOP LOCATIONS:")
     print("="*60)
     cursor.execute("""
         SELECT location, COUNT(*) as count

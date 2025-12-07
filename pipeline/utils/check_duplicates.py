@@ -10,13 +10,11 @@ from pipeline.models.database import Database
 db = Database()
 db.connect()
 
-print("\n" + "="*70)
-print("🔍 DUPLICATE DATA ANALYSIS")
-print("="*70)
+print(" DUPLICATE DATA ANALYSIS")
 
 with db.get_cursor(dict_cursor=True) as cursor:
     # 1. Check URL duplicates
-    print("\n📊 Checking URL duplicates...")
+    print("\nChecking URL duplicates...")
     cursor.execute("""
         SELECT url, COUNT(*) as count
         FROM raw_data
@@ -29,14 +27,14 @@ with db.get_cursor(dict_cursor=True) as cursor:
     url_dupes = cursor.fetchall()
     
     if url_dupes:
-        print(f"   ⚠️  Found {len(url_dupes)} duplicate URLs:")
+        print(f"   Found {len(url_dupes)} duplicate URLs:")
         for row in url_dupes:
             print(f"      {row['url'][:60]}... (appears {row['count']} times)")
     else:
-        print("   ✅ No URL duplicates found!")
+        print("    No URL duplicates found!")
     
     # 2. Check title duplicates
-    print("\n📊 Checking title duplicates...")
+    print("\n Checking title duplicates...")
     cursor.execute("""
         SELECT title, COUNT(*) as count
         FROM raw_data
@@ -48,14 +46,14 @@ with db.get_cursor(dict_cursor=True) as cursor:
     title_dupes = cursor.fetchall()
     
     if title_dupes:
-        print(f"   ⚠️  Found {len(title_dupes)} duplicate titles:")
+        print(f"     Found {len(title_dupes)} duplicate titles:")
         for row in title_dupes:
             print(f"      '{row['title'][:60]}...' (appears {row['count']} times)")
     else:
-        print("   ✅ No title duplicates found!")
+        print("    No title duplicates found!")
     
     # 3. Check exact content duplicates
-    print("\n📊 Checking exact content duplicates...")
+    print("\n Checking exact content duplicates...")
     cursor.execute("""
         SELECT title, snippet, COUNT(*) as count
         FROM raw_data
@@ -67,14 +65,14 @@ with db.get_cursor(dict_cursor=True) as cursor:
     content_dupes = cursor.fetchall()
     
     if content_dupes:
-        print(f"   ⚠️  Found {len(content_dupes)} exact content duplicates:")
+        print(f"     Found {len(content_dupes)} exact content duplicates:")
         for row in content_dupes:
             print(f"      '{row['title'][:60]}...' (appears {row['count']} times)")
     else:
-        print("   ✅ No exact content duplicates found!")
+        print("    No exact content duplicates found!")
     
     # 4. Overall statistics
-    print("\n📈 Overall Statistics:")
+    print("\n Overall Statistics:")
     cursor.execute("SELECT COUNT(*) as total FROM raw_data")
     total = cursor.fetchone()['total']
     
