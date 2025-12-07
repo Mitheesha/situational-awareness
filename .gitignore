@@ -232,3 +232,5 @@ Thumbs.db
 # Environment
 .env
 test_feeds.py
+fix_dashboard.py
+check_db.py
