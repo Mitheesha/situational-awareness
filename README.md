@@ -156,9 +156,9 @@ python pipeline/consumer/realtime_ai_processor.py
 streamlit run dashboard/app.py
 ```
 
-**Dashboard URL**: http://localhost:8501
 
 ---
+
 
 ## 📊 System Performance
 
@@ -505,40 +505,6 @@ situational-awareness/
 
 ---
 
-## 📸 Screenshots
-
-### Real-Time Dashboard Overview
-*Live sentiment tracking, key metrics, and data freshness indicator*
-
-### AI Sentiment Analysis
-*BERT-powered sentiment trends with confidence scores over time*
-
-### ML Anomaly Detection Results
-*Machine learning risk prediction with PCA visualization*
-
-### Geographic Hotspots Map
-*Location-based risk mapping across 5 Sri Lankan cities*
-
-### Priority Alerts Panel
-*Real-time critical and high-priority warnings with AI recommendations*
-
----
-
-## 👥 Team
-
-**Team Name**: [Your Team Name]  
-**Team Number**: [Your Team Number]  
-**Competition**: ModelX Final Hurdle  
-**Institution**: [Your Institution]
-
-**Team Members**:
-- [Member 1 Name] - [Role]
-- [Member 2 Name] - [Role]
-- [Member 3 Name] - [Role]
-- [Member 4 Name] - [Role]
-
----
-
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
@@ -558,19 +524,14 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📞 Contact & Links
 
+- **Email**: mitheeshatharind@gmai.com
 - **GitHub Repository**: [github.com/Mitheesha/situational-awareness](https://github.com/Mitheesha/situational-awareness)
-- **Demo Video**: [YouTube/Drive Link]
-- **Presentation Slides**: [Link to PDF]
-- **Competition**: ModelX Final Hurdle 2024
-- **Pitch Date**: December 6-7, 2024
 
 ---
 
 ## 🎬 Demo
 
-**📺 Demo Video**: [Insert YouTube/Google Drive Link]  
-**📊 Live Dashboard**: http://localhost:8501 (when running locally)  
-**🎤 Live Pitch**: December 6-7, 2024
+**📺 Demo Video**: [[Google Drive Link](https://drive.google.com/file/d/1LjwIiPpAISAz-XD9JDWH8F9SyoHlXuqG/view?usp=sharing)]  
 
 ---
 
@@ -584,7 +545,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**ModelX Final Hurdle 2024 Submission**
 
 **⭐ Star this repo if you find it useful!**
 
