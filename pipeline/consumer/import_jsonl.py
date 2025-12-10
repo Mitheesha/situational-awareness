@@ -22,12 +22,12 @@ def import_jsonl(filename, batch_size=50):
     db = Database()
     
     if not db.connect():
-        print("❌ Cannot connect to database")
+        print("Cannot connect to database")
         print("   Make sure Docker is running: docker compose up -d")
         return
     
     print(f"\n{'='*70}")
-    print(f"📂 Importing: {filename}")
+    print(f"Importing: {filename}")
     print(f"{'='*70}\n")
     
     imported = 0
@@ -41,7 +41,7 @@ def import_jsonl(filename, batch_size=50):
             lines = f.readlines()
             total_lines = len(lines)
             
-            print(f"📊 Total records to import: {total_lines}\n")
+            print(f"Total records to import: {total_lines}\n")
             
             for line_num, line in enumerate(lines, 1):
                 try:
@@ -63,24 +63,24 @@ def import_jsonl(filename, batch_size=50):
                             elapsed = time.time() - start_time
                             rate = imported / elapsed if elapsed > 0 else 0
                             
-                            print(f"⏳ Progress: {progress:.1f}% | "
+                            print(f"Progress: {progress:.1f}% | "
                                   f"Imported: {imported} | "
                                   f"Rate: {rate:.1f} records/sec")
                     else:
                         errors += 1
                         
                 except json.JSONDecodeError as e:
-                    print(f"❌ Line {line_num}: Invalid JSON - {e}")
+                    print(f"Line {line_num}: Invalid JSON - {e}")
                     errors += 1
                 except Exception as e:
-                    print(f"❌ Line {line_num}: Error - {e}")
+                    print(f"Line {line_num}: Error - {e}")
                     errors += 1
         
         # Final statistics
         elapsed_time = time.time() - start_time
         
         print(f"\n{'='*70}")
-        print(f"✅ IMPORT COMPLETE!")
+        print(f"IMPORT COMPLETE!")
         print(f"{'='*70}")
         print(f"  Records Imported: {imported}")
         print(f"  Errors: {errors}")
@@ -89,14 +89,14 @@ def import_jsonl(filename, batch_size=50):
         print(f"{'='*70}\n")
         
         # Source breakdown
-        print("📊 Import Breakdown by Source:")
+        print("Import Breakdown by Source:")
         for source, count in sorted(source_breakdown.items(), key=lambda x: x[1], reverse=True):
             bar = "█" * (count // 20)
             print(f"  {source:35} {count:4} {bar}")
         
         # Database stats
         print(f"\n{'='*70}")
-        print("📊 DATABASE STATUS:")
+        print("DATABASE STATUS:")
         print(f"{'='*70}")
         stats = db.get_statistics()
         print(f"  Total Records: {stats.get('total_records', 0)}")
@@ -112,9 +112,9 @@ def import_jsonl(filename, batch_size=50):
         print(f"{'='*70}\n")
         
     except FileNotFoundError:
-        print(f"❌ File not found: {filename}")
+        print(f"File not found: {filename}")
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"Unexpected error: {e}")
     finally:
         db.disconnect()
 
@@ -123,9 +123,9 @@ if __name__ == "__main__":
     import_file = Path("data_output/export/redis_dump.jsonl")
     
     if import_file.exists():
-        print("\n🚀 Starting import from JSONL dump...\n")
+        print("\nStarting import from JSONL dump...\n")
         import_jsonl(import_file, batch_size=50)
     else:
-        print(f"\n❌ Dump file not found: {import_file}")
-        print("\n💡 Expected location: data_output/export/redis_dump.jsonl")
+        print(f"\nDump file not found: {import_file}")
+        print("\nExpected location: data_output/export/redis_dump.jsonl")
         print("   Did you run dump_all.py to export from Redis?")

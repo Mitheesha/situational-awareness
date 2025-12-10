@@ -13,7 +13,6 @@ st.set_page_config(
 )
 
 
-
 import streamlit as st
 import sys
 from pathlib import Path
@@ -24,6 +23,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from pipeline.models.database import Database
+
+# Initialize session state for manual refresh button
+if 'refresh_trigger' not in st.session_state:
+    st.session_state['refresh_trigger'] = 0
 
 # Initialize database connection
 @st.cache_resource
@@ -56,6 +59,14 @@ if db is None:
 # Custom CSS
 st.markdown("""
 <style>
+    /* ADD THIS NEW RULE FOR SUBHEADERS */
+    h2 {
+        color: #333; 
+    }
+    /* ADD THIS NEW RULE FOR SECTION HEADINGS INSIDE TABS */
+    h3 {
+        color: #333; 
+    }
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -94,14 +105,22 @@ st.markdown("""
 # Header
 st.markdown('<h1 class="main-header">🇱🇰 Situational Awareness Platform</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666;">Real-time Intelligence for Sri Lankan Businesses | Powered by AI/ML</p>', unsafe_allow_html=True)
+st.markdown(f"""
+<div style='text-align: center; color: #666; padding: 0.5rem;'>
+    🔄 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | 
+    Auto-refresh: Every 5 minutes
+</div>
+""", unsafe_allow_html=True)
 
 # Sidebar filters
 st.sidebar.title("🎛️ Controls")
 time_range = st.sidebar.selectbox(
     "📅 Time Range",
     ["Last 24 Hours", "Last 7 Days", "Last 30 Days", "All Time"],
-    index=0
+    index=0,
+    key='time_range_select' # Added unique key
 )
+
 
 # Convert to hours
 time_map = {
@@ -115,15 +134,36 @@ hours = time_map[time_range]
 source_filter = st.sidebar.multiselect(
     "📰 Data Sources",
     ["Ada Derana", "The Island", "X (Twitter) [Simulated]"],
-    default=["Ada Derana", "The Island", "X (Twitter) [Simulated]"]
+    default=["Ada Derana", "The Island", "X (Twitter) [Simulated]"],
+    key='source_filter_select' # Added unique key
 )
 
 st.sidebar.markdown("---")
-refresh = st.sidebar.button("🔄 Refresh Data")
+st.sidebar.markdown("### ⚡ Real-Time Mode")
+
+
+auto_refresh = st.sidebar.checkbox(
+    "🔄 Auto-refresh (30s)", 
+    value=False, 
+    key='auto_refresh_checkbox'
+)
+
+from streamlit_autorefresh import st_autorefresh
+if auto_refresh:
+    st_autorefresh(interval=30000, key="auto_refresh")
+    
+st.sidebar.markdown("---")
+
+refresh = st.sidebar.button("🔄 Refresh Data", key='manual_refresh_button')
+
+# Handle the manual refresh logic
+if refresh:
+    st.session_state['refresh_trigger'] += 1
+    st.rerun() # Force an immediate rerun to apply the new trigger value
 
 #Fetch Data
 @st.cache_data(ttl=300)
-def load_dashboard_data(hours, sources):
+def load_dashboard_data(hours, sources, refresh_trigger_value):
     """Load all dashboard data"""
     
     db = Database()
@@ -131,7 +171,7 @@ def load_dashboard_data(hours, sources):
     
     try:
         with db.get_cursor(dict_cursor=True) as cursor:
-            # Build filters ONCE
+            # Build filters
             rd_time_filter = ""
             sp_time_filter = ""
             if hours:
@@ -148,7 +188,7 @@ def load_dashboard_data(hours, sources):
                 SELECT 
                     COUNT(*) as total_records,
                     COUNT(DISTINCT rd.source) as sources,
-                    AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)) as avg_sentiment,
+                    COALESCE(AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)), 0) as avg_sentiment,
                     COUNT(CASE WHEN rd.source_type = 'news' THEN 1 END) as news_count,
                     COUNT(CASE WHEN rd.source_type = 'social' THEN 1 END) as social_count
                 FROM raw_data rd
@@ -160,7 +200,7 @@ def load_dashboard_data(hours, sources):
             cursor.execute(f"""
                 SELECT 
                     DATE_TRUNC('hour', rd.created_at) as hour,
-                    AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)) as avg_sentiment,
+                    COALESCE(AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)), 0) as avg_sentiment,
                     COUNT(*) as count
                 FROM raw_data rd
                 WHERE rd.metadata->>'ai_sentiment_score' IS NOT NULL
@@ -171,28 +211,28 @@ def load_dashboard_data(hours, sources):
             """)
             sentiment_timeline = cursor.fetchall()
             
-            # Top topics
+            # Top topics - FIXED WITH COALESCE
             cursor.execute(f"""
                 SELECT 
-                    sp.topic,
-                    sp.urgency,
+                    COALESCE(sp.topic, 'Unknown') as topic,
+                    COALESCE(sp.urgency, 'medium') as urgency,
                     COUNT(*) as mentions,
-                    AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)) as avg_sentiment
+                    COALESCE(AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)), 0) as avg_sentiment
                 FROM social_posts sp
                 JOIN raw_data rd ON sp.raw_data_id = rd.id
-                WHERE 1=1 {sp_time_filter}
+                WHERE sp.topic IS NOT NULL {sp_time_filter}
                 GROUP BY sp.topic, sp.urgency
                 ORDER BY mentions DESC
                 LIMIT 10
             """)
             top_topics = cursor.fetchall()
             
-            # Geographic distribution
+            # Geographic distribution - FIXED WITH COALESCE
             cursor.execute(f"""
                 SELECT 
-                    sp.location,
+                    COALESCE(sp.location, 'Unknown') as location,
                     COUNT(*) as mentions,
-                    AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)) as avg_sentiment
+                    COALESCE(AVG(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT)), 0) as avg_sentiment
                 FROM social_posts sp
                 JOIN raw_data rd ON sp.raw_data_id = rd.id
                 WHERE sp.location IS NOT NULL {sp_time_filter}
@@ -201,19 +241,19 @@ def load_dashboard_data(hours, sources):
             """)
             locations = cursor.fetchall()
             
-            # Recent alerts
+            # Recent alerts - FIXED WITH COALESCE
             cursor.execute(f"""
                 SELECT 
-                    rd.title,
-                    rd.source,
-                    sp.topic,
+                    COALESCE(rd.title, 'No title') as title,
+                    COALESCE(rd.source, 'Unknown') as source,
+                    COALESCE(sp.topic, 'Unknown') as topic,
                     COALESCE(sp.urgency, 'medium') as urgency,
-                    CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT) as sentiment,
+                    COALESCE(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT), -0.5) as sentiment,
                     sp.created_at as fetched_at
                 FROM raw_data rd
                 JOIN social_posts sp ON sp.raw_data_id = rd.id
                 WHERE COALESCE(sp.urgency, 'medium') IN ('critical', 'high')
-                  AND CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT) < -0.3
+                  AND COALESCE(CAST(rd.metadata->>'ai_sentiment_score' AS FLOAT), -0.5) < -0.3
                   {sp_time_filter}
                 ORDER BY sp.created_at DESC
                 LIMIT 10
@@ -232,7 +272,7 @@ def load_dashboard_data(hours, sources):
         db.disconnect()
 
 # Load data
-data = load_dashboard_data(hours, source_filter)
+data = load_dashboard_data(hours, source_filter, st.session_state['refresh_trigger'])
 
 # Top metrics row
 col1, col2, col3, col4 = st.columns(4)
@@ -319,23 +359,29 @@ with tab1:
         
         if data['top_topics']:
             for topic in data['top_topics'][:5]:
+                # Safe null handling
+                urgency = topic.get('urgency') or 'medium'
+                avg_sentiment = topic.get('avg_sentiment') or 0.0
+                mentions = topic.get('mentions') or 0
+                topic_name = topic.get('topic') or 'Unknown'
+                
                 urgency_color = {
-                                    'critical': '🔴',
-                                    'high': '🟠',
-                                    'medium': '🟡',
-                                    'low': '🟢'
-                                }.get(topic.get('urgency') or 'medium', '⚪')
+                    'critical': '🔴',
+                    'high': '🟠',
+                    'medium': '🟡',
+                    'low': '🟢'
+                }.get(urgency, '⚪')
                 
                 st.markdown(f"""
-                <div style="background: #f0f2f6; padding: 1rem; border-radius: 5px; margin: 0.5rem 0;">
-                    <b>{urgency_color} {topic['topic'].title()}</b><br>
-                    <span style="font-size: 0.9rem; color: #666;">
-                        {topic['mentions']} mentions | Sentiment: {topic['avg_sentiment']:.2f}
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
+                    <div style="background: #333; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; color: #FFF;">
+                        <b>{urgency_color} {topic_name.title()}</b><br>
+                        <span style="font-size: 0.9rem; color: #FFF;">
+                            {mentions} mentions | Sentiment: {avg_sentiment:.2f}
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
         else:
-            st.info("No topic data available")
+            st.info("No topic data available for selected time range")
 
 # TAB 2: AI Insights
 with tab2:

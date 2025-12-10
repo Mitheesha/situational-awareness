@@ -36,10 +36,10 @@ class RedisConsumer:
                 decode_responses=True
             )
             self.redis_client.ping()
-            print("✅ Connected to Redis")
+            print("Connected to Redis")
             return True
         except redis.ConnectionError:
-            print("❌ Cannot connect to Redis")
+            print("Cannot connect to Redis")
             print("   Start with: cd infra && docker compose up -d")
             return False
     
@@ -64,11 +64,11 @@ class RedisConsumer:
                 return False
                 
         except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON: {e}")
+            print(f"Invalid JSON: {e}")
             self.stats['errors'] += 1
             return False
         except Exception as e:
-            print(f"❌ Error processing message: {e}")
+            print(f"Error processing message: {e}")
             self.stats['errors'] += 1
             return False
     
@@ -88,7 +88,7 @@ class RedisConsumer:
         
         return processed_count
     
-    def run_continuous(self, batch_size=10, interval=5):
+    def run_continuous(self, batch_size=10, interval=300):
         """
         Run consumer continuously
         
@@ -97,32 +97,32 @@ class RedisConsumer:
             interval: Seconds to wait between cycles
         """
         print("="*70)
-        print("🔄 REDIS CONSUMER - LAYER 2 PIPELINE")
+        print("REDIS CONSUMER - LAYER 2 PIPELINE")
         print("="*70)
-        print(f"⚙️  Batch size: {batch_size}")
-        print(f"⏱️  Check interval: {interval} seconds")
-        print(f"📤 Source: Redis queue 'collector:incoming'")
-        print(f"📥 Destination: PostgreSQL database")
+        print(f"Batch size: {batch_size}")
+        print(f"Check interval: {interval} seconds")
+        print(f"Source: Redis queue 'collector:incoming'")
+        print(f"Destination: PostgreSQL database")
         print("="*70)
-        print("💡 Press Ctrl+C to stop\n")
+        print("Press Ctrl+C to stop\n")
         
         try:
             while True:
                 queue_length = self.redis_client.llen('collector:incoming')
                 
                 if queue_length > 0:
-                    print(f"\n📥 Queue: {queue_length} messages waiting")
+                    print(f"\nQueue: {queue_length} messages waiting")
                     processed = self.consume_batch(batch_size)
                     
                     if processed > 0:
-                        print(f"✅ Processed {processed} messages | Total: {self.stats['processed']}")
+                        print(f"Processed {processed} messages | Total: {self.stats['processed']}")
                         
                         # Show stats periodically
                         if self.stats['processed'] % 50 == 0:
                             self.print_stats()
                 else:
                     current_time = datetime.now().strftime('%H:%M:%S')
-                    print(f"⏳ Queue empty (checked at {current_time}) | Total processed: {self.stats['processed']}")
+                    print(f"Queue empty (checked at {current_time}) | Total processed: {self.stats['processed']}")
                 
                 time.sleep(interval)
                 
@@ -135,7 +135,7 @@ class RedisConsumer:
         rate = self.stats['processed'] / runtime if runtime > 0 else 0
         
         print("\n" + "="*70)
-        print("📊 PROCESSING STATISTICS")
+        print("PROCESSING STATISTICS")
         print("="*70)
         print(f"  Total Processed: {self.stats['processed']}")
         print(f"  Errors: {self.stats['errors']}")
@@ -158,7 +158,7 @@ class RedisConsumer:
         
         # Show database stats
         db_stats = self.db.get_statistics()
-        print("📊 DATABASE STATUS:")
+        print("DATABASE STATUS:")
         print(f"  Total Records: {db_stats.get('total_records', 0)}")
         print(f"  News Articles: {db_stats.get('by_type', {}).get('news', 0)}")
         print(f"  Social Posts: {db_stats.get('by_type', {}).get('social', 0)}")
@@ -173,7 +173,7 @@ class RedisConsumer:
         
         # Connect to Database
         if not self.db.connect():
-            print("❌ Failed to connect to database")
+            print("Failed to connect to database")
             print("   Make sure Docker is running: docker compose up -d")
             return
         
