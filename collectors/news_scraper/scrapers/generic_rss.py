@@ -33,7 +33,7 @@ def fetch_rss_feed(url, source_name):
     Returns:
         List of normalized article dictionaries
     """
-    print(f"📰 Fetching {source_name}...")
+    print(f"Fetching {source_name}...")
     
     feed = feedparser.parse(url)
     items = []

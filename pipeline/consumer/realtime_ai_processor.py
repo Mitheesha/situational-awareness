@@ -19,7 +19,7 @@ class RealtimeAIProcessor:
         self.db = Database()
         
         # Initialize AI model (loads once, reuses for all predictions)
-        print("🤖 Loading AI sentiment model (DistilBERT)...")
+        print("Loading AI sentiment model (DistilBERT)...")
         self.sentiment_analyzer = pipeline(
             "sentiment-analysis",
             model="distilbert-base-uncased-finetuned-sst-2-english",
